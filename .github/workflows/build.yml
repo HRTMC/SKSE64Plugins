@@ -1,0 +1,51 @@
+name: Build Plugins
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin:
+          - ActorBasePerkFix
+          - ActorLimitFix
+          - BarterLimitFix
+          - BugFixesSSE
+          - ConditionsTargetMagicEffects
+          - ConsoleCommandCompanion
+          - LogInventoryItemRotation
+          - PickpocketChanceFix
+          - ScrambledBugs
+          - ScriptEffectArchetypeCrashFix
+          - Trails
+          - VendorRespawnFix
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg
+          .\vcpkg\bootstrap-vcpkg.bat
+
+      - name: Install dependencies (classic mode)
+        run: |
+          .\vcpkg\vcpkg.exe install nlohmann-json:x64-windows spdlog:x64-windows
+          .\vcpkg\vcpkg.exe integrate install
+
+      - name: Build ${{ matrix.plugin }} (AE, x64)
+        run: msbuild "${{ matrix.plugin }}\${{ matrix.plugin }}.sln" /p:Configuration=ReleaseAnniversaryEdition /p:Platform=x64 /m
+
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.plugin }}-1.7.104
+          path: ${{ matrix.plugin }}/x64/ReleaseAnniversaryEdition/*.dll
