@@ -41,6 +41,12 @@ jobs:
           .\vcpkg\vcpkg.exe install nlohmann-json:x64-windows-static-md spdlog:x64-windows-static-md
           .\vcpkg\vcpkg.exe integrate install
 
+      - name: Set up fake Skyrim install path for post-build copy
+        run: |
+          $fakePath = "$env:RUNNER_TEMP\FakeSkyrim"
+          New-Item -ItemType Directory -Force -Path "$fakePath\Data\SKSE\Plugins" | Out-Null
+          echo "SKYRIM_SPECIAL_EDITION_PATH=$fakePath" >> $env:GITHUB_ENV
+
       - name: Build ${{ matrix.plugin }} (AE, x64)
         run: msbuild "${{ matrix.plugin }}\${{ matrix.plugin }}.sln" /p:Configuration=ReleaseAnniversaryEdition /p:Platform=x64 /m
 
